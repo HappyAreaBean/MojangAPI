@@ -56,7 +56,7 @@ public class MojangAPI extends API {
     /**
      * Gets player profile
      * @param uuid
-     * @return {@see me.kbrewster.mojangapi.profile.Profile}
+     * @return {@link Profile}
      * @throws IOException
      * @throws APIException
      */
@@ -73,7 +73,7 @@ public class MojangAPI extends API {
     /**
      * Gets player profile
      * @param username
-     * @return {@see me.kbrewster.mojangapi.profile.Profile}
+     * @return {@link Profile}
      * @throws IOException
      * @throws APIException
      */
@@ -88,7 +88,7 @@ public class MojangAPI extends API {
     }
 
     /**
-     * Gets Minecraft Username from {@see java.util.UUID}
+     * Gets Minecraft Username from {@link UUID}
      * @param uuid
      * @return
      */
@@ -112,7 +112,7 @@ public class MojangAPI extends API {
     }
 
     /**
-     * Strips away dashes from {@see java.util.UUID}
+     * Strips away dashes from {@link java.util.UUID}
      * @param uuid
      * @return uuid w/o dashes
      */
@@ -132,7 +132,7 @@ public class MojangAPI extends API {
     /**
      * Gets Name History of a Minecraft Username
      * @param username
-     * @return List of {@see me.kbrewster.mojangapi.profile.Name}
+     * @return List of {@link UsernameHistory}
      * @throws IOException
      * @throws APIException
      */
@@ -143,7 +143,7 @@ public class MojangAPI extends API {
     /**
      * Gets Name History of a Minecraft UUID
      * @param uuid
-     * @return List of {@see me.kbrewster.mojangapi.profile.Name}
+     * @return List of {@link UsernameHistory}
      * @throws IOException
      * @throws APIException
      */
@@ -204,11 +204,11 @@ public class MojangAPI extends API {
     /**
      * Used to get Mojang's game statistics
      * @param key
-     * @return {@see me.kbrewster.mojangapi.MojangStatistics}
+     * @return {@link MojangStatistics}
      * @throws IOException
      */
     public static MojangStatistics getStatistics(MetricKeys key) throws IOException {
-        String json = sendPost("https://api.mojang.com/orders/statistics", "{\"metricKeys\": [\"" + key.getKey() + "\"]}");
+        String json = sendPost("https://api.mojang.com/orders/statistics", "{\"metricKeys\": [\"" + key + "\"]}");
         JsonElement obj = new JsonParser().parse(json);
         return new Gson().fromJson(obj, MojangStatistics.class);
     }
