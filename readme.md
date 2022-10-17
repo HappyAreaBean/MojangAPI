@@ -3,11 +3,11 @@ Parsing for all the Mojang API
 
 Examples: 
 -
-https://github.com/KevinPriv/MojangAPI/tree/master/src/test/java/examples
+https://github.com/HappyAreaBean/MojangAPI/tree/master/src/test/java/examples
 
 Downloads
 -
-https://github.com/KevinPriv/MojangAPI/releases  
+https://github.com/HappyAreaBean/MojangAPI/releases  
 
 Gradle
 -
