@@ -20,9 +20,9 @@ Gradle
 ```
 Adding the dependency:
 ```gradle
-    dependencies {
-        compile "com.github.KevinPriv:MojangAPI:1.0"
-    }
+	dependencies {
+        implementation 'com.github.HappyAreaBean:MojangAPI:2.0.0'
+	}
 
 ```
 Maven
@@ -38,10 +38,11 @@ Maven
  ```
  Adding the dependency:
 ```xml
+
 <dependency>
-    <groupId>com.github.KevinPriv</groupId>
+    <groupId>com.github.HappyAreaBean</groupId>
     <artifactId>MojangAPI</artifactId>
-    <version>1.0</version>
+    <version>2.0.0</version>
 </dependency>
 
 ```
