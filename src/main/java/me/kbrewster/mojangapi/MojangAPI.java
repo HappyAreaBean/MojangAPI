@@ -1,20 +1,25 @@
 package me.kbrewster.mojangapi;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import me.kbrewster.API;
 import me.kbrewster.exceptions.APIException;
 import me.kbrewster.exceptions.InvalidPlayerException;
-import me.kbrewster.mojangapi.authentication.AuthenticatedUser;
-import me.kbrewster.mojangapi.profile.Model;
-import me.kbrewster.mojangapi.profile.Name;
 import me.kbrewster.mojangapi.profile.Profile;
+import me.kbrewster.mojangapi.profile.UsernameHistory;
 import me.kbrewster.mojangapi.stats.MetricKeys;
 import me.kbrewster.mojangapi.stats.MojangStatistics;
-import okhttp3.*;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -24,7 +29,7 @@ import java.util.regex.Pattern;
 @API.Reference(apiName = "Mojang API", apiVersion = "1.5")
 public class MojangAPI extends API {
 
-    private final static String BASE_URL = "https://api.mojang.com";
+    private final static String BASE_URL = "https://api.ashcon.app/mojang/v2/user/";
     private final static String STATUS_URL = "https://status.mojang.com/check";
 
     private final static Pattern STRIPPED_UUID_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
@@ -56,7 +61,24 @@ public class MojangAPI extends API {
      * @throws APIException
      */
     public static Profile getProfile(UUID uuid) throws IOException, APIException {
-        String json = sendGet("https://sessionserver.mojang.com/session/minecraft/profile/" + stripDashes(uuid) + "?unsigned=false");
+        String json = sendGet(BASE_URL + stripDashes(uuid));
+        JsonElement jsonElement = new JsonParser().parse(json);
+        if (jsonElement.isJsonNull()) throw new APIException("This shouldn't happen");
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        if (jsonObject.get("error") instanceof JsonNull)
+            throw new APIException(jsonObject.get("errorMessage").getAsString());
+        return new Gson().fromJson(jsonObject, Profile.class);
+    }
+
+    /**
+     * Gets player profile
+     * @param username
+     * @return {@see me.kbrewster.mojangapi.profile.Profile}
+     * @throws IOException
+     * @throws APIException
+     */
+    public static Profile getProfile(String username) throws IOException, APIException {
+        String json = sendGet(BASE_URL + username);
         JsonElement jsonElement = new JsonParser().parse(json);
         if (jsonElement.isJsonNull()) throw new APIException("This shouldn't happen");
         JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -71,13 +93,13 @@ public class MojangAPI extends API {
      * @return
      */
     public static String getName(UUID uuid) throws IOException, APIException {
-        ArrayList<Name> names = getNameHistory(uuid);
+        List<UsernameHistory> names = getNameHistory(uuid);
         if(names.size() == 0) return uuid.toString();
-        return names.get(names.size() - 1).getName(); // i mean i could get it vai profile, but im hacky af
+        return names.get(names.size() - 1).getUsername(); // i mean i could get it vai profile, but im hacky af
     }
 
     public static String getUsername(UUID uuid) throws IOException, APIException {
-        return getProfile(uuid).getName();
+        return getProfile(uuid).getUsername();
     }
 
     /**
@@ -114,9 +136,8 @@ public class MojangAPI extends API {
      * @throws IOException
      * @throws APIException
      */
-    public static ArrayList<Name> getNameHistory(String username) throws IOException, APIException {
-        UUID uuid = getUUID(username);
-        return getNameHistory(uuid);
+    public static List<UsernameHistory> getNameHistory(String username) throws IOException, APIException {
+        return getProfile(username).getUsernameHistory();
     }
 
     /**
@@ -126,26 +147,8 @@ public class MojangAPI extends API {
      * @throws IOException
      * @throws APIException
      */
-    public static ArrayList<Name> getNameHistory(UUID uuid) {
-        Gson gson = new Gson();
-        ArrayList<Name> names = new ArrayList<>();
-        try {
-            String json = sendGet(String.format(BASE_URL + "/user/profiles/%s/names", stripDashes(uuid)));
-
-            JsonElement parser = new JsonParser().parse(json);
-            if (json.isEmpty()) throw new InvalidPlayerException();
-            if (!parser.isJsonArray()) {
-                return names;
-            }
-            JsonArray arrayNames = parser.getAsJsonArray();
-            arrayNames.forEach(obj -> {
-                Name name = gson.fromJson(obj, Name.class);
-                names.add(name);
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return names;
+    public static List<UsernameHistory> getNameHistory(UUID uuid) throws IOException, APIException {
+        return getProfile(uuid).getUsernameHistory();
     }
 
     /**
@@ -157,38 +160,24 @@ public class MojangAPI extends API {
      * @throws InvalidPlayerException
      */
     public static UUID getUUID(String username) throws IOException, APIException, InvalidPlayerException {
-        String json = sendGet("https://api.mojang.com/users/profiles/minecraft/" + username);
-        JsonElement parse = new JsonParser().parse(json);
-        if (parse.isJsonNull())
-            throw new InvalidPlayerException();
-        JsonObject obj = parse.getAsJsonObject();
-        if (obj.get("error") instanceof JsonNull)
-            throw new APIException(obj.get("errorMessage").getAsString());
-        return UUID.fromString(addDashes(obj.get("id").getAsString()));
+        return UUID.fromString(addDashes(getProfile(username).getUuid()));
     }
 
     /**
      * Gets minecraft UUID from Username
      * @param usernames
      * @return uuid
-     * @throws IOException
-     * @throws APIException
      * @throws InvalidPlayerException
      */
-    public static List<UUID> getUUIDs(List<String> usernames) throws IOException, APIException, InvalidPlayerException {
-        String names = usernames.toString()
-                .replace("[", "[\"")
-                .replace(", ", "\", \"")
-                .replace("]", "\"]");
-        System.out.println(names);
-        String json = sendPost("https://api.mojang.com/profiles/minecraft", names);
+    public static List<UUID> getUUIDs(List<String> usernames) throws InvalidPlayerException, APIException, IOException {
         List<UUID> uuids = new ArrayList<>();
-        JsonElement parse = new JsonParser().parse(json);
-        for(JsonElement element : parse.getAsJsonArray()){
-            if (parse.isJsonNull())
+        for (String names : usernames) {
+            System.out.println(names);
+            Profile profile = getProfile(names);
+            if (profile.getCode() == 404) {
                 throw new InvalidPlayerException();
-            JsonObject obj = element.getAsJsonObject();
-            uuids.add(UUID.fromString(addDashes(obj.get("id").getAsString())));
+            }
+            uuids.add(UUID.fromString(addDashes(profile.getUuid())));
         }
         return uuids;
     }
@@ -197,24 +186,17 @@ public class MojangAPI extends API {
      * Gets minecraft UUID from Username
      * @param usernames
      * @return uuid
-     * @throws IOException
-     * @throws APIException
      * @throws InvalidPlayerException
      */
-    public static List<UUID> getUUIDs(String... usernames) throws IOException, APIException, InvalidPlayerException {
-        String names = Arrays.toString(usernames)
-                .replace("[", "[\"")
-                .replace(", ", "\", \"")
-                .replace("]", "\"]");
-        System.out.println(names);
-        String json = sendPost("https://api.mojang.com/profiles/minecraft", names);
+    public static List<UUID> getUUIDs(String... usernames) throws InvalidPlayerException, APIException, IOException {
         List<UUID> uuids = new ArrayList<>();
-        JsonElement parse = new JsonParser().parse(json);
-        for(JsonElement element : parse.getAsJsonArray()){
-            if (parse.isJsonNull())
+        for (String names : usernames) {
+            System.out.println(names);
+            Profile profile = getProfile(names);
+            if (profile.getCode() == 404) {
                 throw new InvalidPlayerException();
-            JsonObject obj = element.getAsJsonObject();
-            uuids.add(UUID.fromString(addDashes(obj.get("id").getAsString())));
+            }
+            uuids.add(UUID.fromString(addDashes(profile.getUuid())));
         }
         return uuids;
     }
@@ -229,171 +211,6 @@ public class MojangAPI extends API {
         String json = sendPost("https://api.mojang.com/orders/statistics", "{\"metricKeys\": [\"" + key.getKey() + "\"]}");
         JsonElement obj = new JsonParser().parse(json);
         return new Gson().fromJson(obj, MojangStatistics.class);
-    }
-
-    /**
-     * Resets Minecraft Skin
-     * @param sessionid {@see authenticate}
-     * @param uuid {@see authenticate}
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void resetSkin(String sessionid, UUID uuid) throws IOException, APIException {
-        Request request = new Request.Builder()
-                .url("https://api.mojang.com/user/profile/" + stripDashes(uuid) + "/skin")
-                .header("Authorization", "Bearer " + sessionid)
-                .delete()
-                .build();
-
-        String output = new OkHttpClient().newCall(request).execute().body().string();
-        if (!output.isEmpty()) {
-            throw new APIException(output);
-        }
-
-    }
-
-    /**
-     * Changes Minecraft Skin
-     * @param accessToken {@see authenticate}
-     * @param uuid {@see authenticate}
-     * @param model
-     * @param url
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void changeSkin(String accessToken, UUID uuid, Model model, String url) throws IOException, APIException {
-        String payload = String.format("model=%s&url=%s", model.getModel(), url);
-        MediaType MEDIA_TYPE = MediaType.parse("application/json");
-
-        RequestBody body = RequestBody.create(MEDIA_TYPE, payload);
-        Request request = new Request.Builder()
-                .url("https://api.mojang.com/user/profile/" + stripDashes(uuid) + "/skin")
-                .header("Authorization", "Bearer " + accessToken)
-                .post(body)
-                .build();
-
-        String output = new OkHttpClient().newCall(request).execute().body().string();
-        if (!output.isEmpty()) {
-            throw new APIException(output);
-        }
-    }
-
-    /**
-     * Uploads Minecraft Skin
-     * @param accessToken {@see authenticate}
-     * @param uuid {@see authenticate}
-     * @param model
-     * @param file
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void uploadSkin(String accessToken, UUID uuid, Model model, File file) throws IOException, APIException {
-        RequestBody body = new MultipartBody.Builder()
-                .addFormDataPart("file", file.getName(),
-                        RequestBody.create(MediaType.parse("image/jpeg"), file))
-                .addFormDataPart("model", model.getModel())
-                .build();
-
-        Request request = new Request.Builder()
-                .url("https://api.mojang.com/user/profile/" + stripDashes(uuid) + "/skin")
-                .header("Authorization", "Bearer " + accessToken)
-
-                .put(body)
-                .build();
-
-        String output = new OkHttpClient().newCall(request).execute().body().string();
-        if (!output.isEmpty()) {
-            throw new APIException(output);
-        }
-
-    }
-
-    /**
-     * Authenticates Minecraft User
-     * @param username
-     * @param password
-     * @param token
-     * @param requestUser
-     * @return
-     * @throws IOException
-     * @throws APIException
-     */
-    public static AuthenticatedUser authenticate(String username, String password, String token, boolean requestUser) throws IOException, APIException {
-        JsonObject payload = new JsonObject();
-        JsonObject agent = new JsonObject();
-        agent.addProperty("name", "minecraft");
-        agent.addProperty("version", 1);
-        payload.add("agent", agent);
-        payload.addProperty("username", username);
-        payload.addProperty("password", password);
-        if (token != null) payload.addProperty("clientToken", token); //optional
-        if (requestUser) payload.addProperty("requestUser", true); //optional
-        String response = sendPost("https://authserver.mojang.com/authenticate", payload.toString());
-        JsonObject json = new JsonParser().parse(response).getAsJsonObject();
-        if (json.get("error") instanceof JsonNull)
-            throw new APIException(json.get("errorMessage").getAsString());
-        return new Gson().fromJson(json, AuthenticatedUser.class);
-    }
-
-    /**
-     * Resets Minecraft Skin
-     * @param accessToken {@see authenticate}
-     * @param username {@see authenticate}
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void resetSkin(String accessToken, String username) throws IOException, APIException {
-        resetSkin(accessToken, getUUID(username));
-    }
-
-    /**
-     * Changes Minecraft Skin
-     * @param accessToken {@see authenticate}
-     * @param username {@see authenticate}
-     * @param model
-     * @param url
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void changeSkin(String accessToken, String username, Model model, String url) throws IOException, APIException {
-        changeSkin(accessToken, getUUID(username), model, url);
-    }
-
-    /**
-     * Uploads Minecraft Skin
-     * @param accessToken {@see authenticate}
-     * @param username {@see authenticate}
-     * @param model
-     * @param skin
-     * @throws IOException
-     * @throws APIException
-     */
-    public static void uploadSkin(String accessToken, String username, Model model, File skin) throws IOException, APIException {
-        uploadSkin(accessToken, getUUID(username), model, skin);
-    }
-
-    /**
-     * Authenticates User
-     * @param username
-     * @param password
-     * @param requestUser
-     * @return
-     * @throws IOException
-     * @throws APIException
-     */
-    public static AuthenticatedUser authenticate(String username, String password, boolean requestUser) throws IOException, APIException {
-        return authenticate(username, password, null, requestUser);
-    }
-
-    /**
-     * This will return the player's username plus any additional information about them
-     * @param username
-     * @return {@see me.kbrewster.profile.Profile}
-     * @throws IOException
-     * @throws APIException
-     */
-    public static Profile getProfile(String username) throws IOException, APIException {
-        return getProfile(getUUID(username));
     }
 
 }

@@ -1,12 +1,7 @@
 package examples;
 
 import me.kbrewster.mojangapi.MojangAPI;
-import me.kbrewster.mojangapi.profile.Name;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class MojangNamesExample {
@@ -20,14 +15,6 @@ public class MojangNamesExample {
         System.out.println("------UUID -> Username-----");
         UUID uuid = MojangAPI.getUUID("Sk1er");
         System.out.println("Sk1ers UUID is " + uuid);
-        System.out.println("--------------------------\n");
-
-        System.out.println("------- Name History -----");
-        for (Name history : MojangAPI.getNameHistory(uuid)) {
-            String name = history.getName();
-            DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-            System.out.println(String.format("%s -> %s", name, formatter.format(history.getChangedToAt())));
-        }
         System.out.println("--------------------------\n");
 
     }
