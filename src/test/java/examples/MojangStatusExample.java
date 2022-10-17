@@ -1,6 +1,6 @@
 package examples;
 
-import me.kbrewster.mojangapi.MojangAPI;
+import cc.happyareabean.mojangapi.MojangAPI;
 
 
 public class MojangStatusExample {

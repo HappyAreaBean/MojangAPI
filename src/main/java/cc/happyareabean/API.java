@@ -1,4 +1,4 @@
-package me.kbrewster;
+package cc.happyareabean;
 
 import lombok.Getter;
 import okhttp3.*;

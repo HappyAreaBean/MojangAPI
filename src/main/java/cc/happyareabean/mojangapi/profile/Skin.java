@@ -1,10 +1,10 @@
-package me.kbrewster.mojangapi.profile;
+package cc.happyareabean.mojangapi.profile;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-public class Cape {
+public class Skin {
 
 	@SerializedName("url")
 	@Expose
@@ -32,7 +32,7 @@ public class Cape {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Cape.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
+		sb.append(Skin.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
 		sb.append("url");
 		sb.append('=');
 		sb.append(((this.url == null) ? "<null>" : this.url));

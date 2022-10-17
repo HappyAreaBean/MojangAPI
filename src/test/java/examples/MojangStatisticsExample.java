@@ -1,8 +1,8 @@
 package examples;
 
-import me.kbrewster.mojangapi.MojangAPI;
-import me.kbrewster.mojangapi.stats.MetricKeys;
-import me.kbrewster.mojangapi.stats.MojangStatistics;
+import cc.happyareabean.mojangapi.MojangAPI;
+import cc.happyareabean.mojangapi.stats.MetricKeys;
+import cc.happyareabean.mojangapi.stats.MojangStatistics;
 
 public class MojangStatisticsExample {
 

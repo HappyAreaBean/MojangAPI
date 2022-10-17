@@ -1,7 +1,7 @@
 package examples;
 
-import me.kbrewster.mojangapi.MojangAPI;
-import me.kbrewster.mojangapi.profile.Profile;
+import cc.happyareabean.mojangapi.MojangAPI;
+import cc.happyareabean.mojangapi.profile.Profile;
 
 import java.util.UUID;
 

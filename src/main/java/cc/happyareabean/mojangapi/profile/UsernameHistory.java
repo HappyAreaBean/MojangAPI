@@ -1,4 +1,4 @@
-package me.kbrewster.mojangapi.profile;
+package cc.happyareabean.mojangapi.profile;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

@@ -1,18 +1,18 @@
-package me.kbrewster.mojangapi;
+package cc.happyareabean.mojangapi;
 
+import cc.happyareabean.API;
+import cc.happyareabean.exceptions.APIException;
+import cc.happyareabean.exceptions.InvalidPlayerException;
+import cc.happyareabean.mojangapi.profile.Profile;
+import cc.happyareabean.mojangapi.profile.UsernameHistory;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.kbrewster.API;
-import me.kbrewster.exceptions.APIException;
-import me.kbrewster.exceptions.InvalidPlayerException;
-import me.kbrewster.mojangapi.profile.Profile;
-import me.kbrewster.mojangapi.profile.UsernameHistory;
-import me.kbrewster.mojangapi.stats.MetricKeys;
-import me.kbrewster.mojangapi.stats.MojangStatistics;
+import cc.happyareabean.mojangapi.stats.MetricKeys;
+import cc.happyareabean.mojangapi.stats.MojangStatistics;
 
 import java.io.IOException;
 import java.util.ArrayList;

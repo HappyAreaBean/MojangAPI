@@ -1,4 +1,4 @@
-group 'com.kbrewster'
+group 'cc.happyareabean'
 version '1.5'
 
 apply plugin: 'java'
