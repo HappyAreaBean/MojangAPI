@@ -13,34 +13,33 @@ Gradle
 -
 ```gradle
     allprojects {
-        repositories {
-            maven { url 'https://jitpack.io' }
+        maven {
+            url "https://repo.fantasyrealms.net/releases"
         }
     }
 ```
 Adding the dependency:
 ```gradle
 	dependencies {
-        implementation 'com.github.HappyAreaBean:MojangAPI:2.0.0'
+            implementation "cc.happyareabean:MojangAPI:2.0.0"
 	}
 
 ```
 Maven
 -
 ```xml
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
+<repository>
+    <id>fantasyrealms-releases</id>
+    <name>Fantasy Realms Repository</name>
+    <url>https://repo.fantasyrealms.net/releases</url>
+</repository>
       
  ```
  Adding the dependency:
 ```xml
 
 <dependency>
-    <groupId>com.github.HappyAreaBean</groupId>
+    <groupId>cc.happyareabean</groupId>
     <artifactId>MojangAPI</artifactId>
     <version>2.0.0</version>
 </dependency>
