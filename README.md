@@ -29,7 +29,7 @@ Adding the dependency:
 
 ```gradle
     dependencies {
-        implementation "cc.happyareabean:MojangAPI:2.0.0"
+        implementation "cc.happyareabean:MojangAPI:3.0.0"
     }
 ```
 
@@ -50,7 +50,7 @@ Adding the dependency:
 <dependency>
     <groupId>cc.happyareabean</groupId>
     <artifactId>MojangAPI</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
