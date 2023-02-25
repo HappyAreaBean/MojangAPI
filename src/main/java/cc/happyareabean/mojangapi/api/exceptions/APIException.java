@@ -1,4 +1,4 @@
-package cc.happyareabean.exceptions;
+package cc.happyareabean.mojangapi.api.exceptions;
 
 public class APIException extends IllegalAccessException {
     public APIException(String msg) {

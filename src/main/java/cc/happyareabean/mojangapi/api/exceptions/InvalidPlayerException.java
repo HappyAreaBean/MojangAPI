@@ -1,4 +1,4 @@
-package cc.happyareabean.exceptions;
+package cc.happyareabean.mojangapi.api.exceptions;
 
 public class InvalidPlayerException extends IllegalStateException {
     public InvalidPlayerException() {

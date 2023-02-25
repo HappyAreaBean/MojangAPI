@@ -1,24 +1,20 @@
 package cc.happyareabean.mojangapi;
 
-import cc.happyareabean.API;
-import cc.happyareabean.exceptions.APIException;
-import cc.happyareabean.exceptions.InvalidPlayerException;
+import cc.happyareabean.mojangapi.api.API;
+import cc.happyareabean.mojangapi.api.exceptions.APIException;
+import cc.happyareabean.mojangapi.api.exceptions.InvalidPlayerException;
 import cc.happyareabean.mojangapi.profile.Profile;
-import cc.happyareabean.mojangapi.profile.UsernameHistory;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import cc.happyareabean.mojangapi.stats.MetricKeys;
-import cc.happyareabean.mojangapi.stats.MojangStatistics;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -26,32 +22,13 @@ import java.util.regex.Pattern;
  * Allows access to the MojangAPI
  * Full Documentation of API found here: http://wiki.vg/Mojang_API
  */
-@API.Reference(apiName = "Mojang API", apiVersion = "1.5")
+@API.Reference(apiName = "Mojang API", apiVersion = "3.0.0")
 public class MojangAPI extends API {
 
     private final static String BASE_URL = "https://api.ashcon.app/mojang/v2/user/";
-    private final static String STATUS_URL = "https://status.mojang.com/check";
 
     private final static Pattern STRIPPED_UUID_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
     private final static Pattern UUID_PATTERN = Pattern.compile("(\\w{8})-(\\w{4})-(\\w{4})-(\\w{4})-(\\w{12})");
-
-    /**
-     * Gets Mojang Service Status's
-     * Possible keys can be found here: http://wiki.vg/Mojang_API
-     *
-     * @return status of various Mojang services. Possible values are green (no issues), yellow (some issues), red (service unavailable).
-     * @throws IOException
-     */
-    public static Map<String, String> getStatus() throws IOException {
-        Map<String, String> map = new TreeMap<>();
-        String json = sendGet(STATUS_URL);
-        JsonArray status = new JsonParser().parse(json).getAsJsonArray();
-        for (JsonElement element : status) {
-            JsonObject obj = element.getAsJsonObject();
-            obj.entrySet().forEach(s -> map.put(s.getKey(), s.getValue().getAsString()));
-        }
-        return map;
-    }
 
     /**
      * Gets player profile
@@ -89,15 +66,18 @@ public class MojangAPI extends API {
 
     /**
      * Gets Minecraft Username from {@link UUID}
-     * @param uuid
-     * @return
+     * @param uuid UUID
+     * @return Minecraft Username
      */
     public static String getName(UUID uuid) throws IOException, APIException {
-        List<UsernameHistory> names = getNameHistory(uuid);
-        if(names.size() == 0) return uuid.toString();
-        return names.get(names.size() - 1).getUsername(); // i mean i could get it vai profile, but im hacky af
+        return getUsername(uuid);
     }
 
+    /**
+     * Gets Minecraft Username from {@link UUID}
+     * @param uuid UUID
+     * @return Minecraft Username
+     */
     public static String getUsername(UUID uuid) throws IOException, APIException {
         return getProfile(uuid).getUsername();
     }
@@ -130,28 +110,6 @@ public class MojangAPI extends API {
     }
 
     /**
-     * Gets Name History of a Minecraft Username
-     * @param username
-     * @return List of {@link UsernameHistory}
-     * @throws IOException
-     * @throws APIException
-     */
-    public static List<UsernameHistory> getNameHistory(String username) throws IOException, APIException {
-        return getProfile(username).getUsernameHistory();
-    }
-
-    /**
-     * Gets Name History of a Minecraft UUID
-     * @param uuid
-     * @return List of {@link UsernameHistory}
-     * @throws IOException
-     * @throws APIException
-     */
-    public static List<UsernameHistory> getNameHistory(UUID uuid) throws IOException, APIException {
-        return getProfile(uuid).getUsernameHistory();
-    }
-
-    /**
      * Gets minecraft UUID from Username
      * @param username
      * @return uuid
@@ -160,7 +118,25 @@ public class MojangAPI extends API {
      * @throws InvalidPlayerException
      */
     public static UUID getUUID(String username) throws IOException, APIException, InvalidPlayerException {
-        return UUID.fromString(addDashes(getProfile(username).getUuid()));
+        return getProfile(username).getUniqueId();
+    }
+
+    /**
+     * Gets minecraft UUID from Username return with Map
+     * @param usernames
+     * @return map with username as key and uuid as value
+     * @throws InvalidPlayerException
+     */
+    public static Map<String, UUID> getUUIDsMap(List<String> usernames) throws InvalidPlayerException, APIException, IOException {
+        Map<String, UUID> uuids = new HashMap<>();
+        for (String names : usernames) {
+            Profile profile = getProfile(names);
+            if (profile.getCode() == 404) {
+                throw new InvalidPlayerException();
+            }
+            uuids.put(names, profile.getUniqueId());
+        }
+        return uuids;
     }
 
     /**
@@ -172,12 +148,11 @@ public class MojangAPI extends API {
     public static List<UUID> getUUIDs(List<String> usernames) throws InvalidPlayerException, APIException, IOException {
         List<UUID> uuids = new ArrayList<>();
         for (String names : usernames) {
-            System.out.println(names);
             Profile profile = getProfile(names);
             if (profile.getCode() == 404) {
                 throw new InvalidPlayerException();
             }
-            uuids.add(UUID.fromString(addDashes(profile.getUuid())));
+            uuids.add(profile.getUniqueId());
         }
         return uuids;
     }
@@ -191,26 +166,13 @@ public class MojangAPI extends API {
     public static List<UUID> getUUIDs(String... usernames) throws InvalidPlayerException, APIException, IOException {
         List<UUID> uuids = new ArrayList<>();
         for (String names : usernames) {
-            System.out.println(names);
             Profile profile = getProfile(names);
             if (profile.getCode() == 404) {
                 throw new InvalidPlayerException();
             }
-            uuids.add(UUID.fromString(addDashes(profile.getUuid())));
+            uuids.add(profile.getUniqueId());
         }
         return uuids;
-    }
-
-    /**
-     * Used to get Mojang's game statistics
-     * @param key
-     * @return {@link MojangStatistics}
-     * @throws IOException
-     */
-    public static MojangStatistics getStatistics(MetricKeys key) throws IOException {
-        String json = sendPost("https://api.mojang.com/orders/statistics", "{\"metricKeys\": [\"" + key + "\"]}");
-        JsonElement obj = new JsonParser().parse(json);
-        return new Gson().fromJson(obj, MojangStatistics.class);
     }
 
 }

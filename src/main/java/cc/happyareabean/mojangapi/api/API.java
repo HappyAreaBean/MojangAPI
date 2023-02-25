@@ -1,4 +1,4 @@
-package cc.happyareabean;
+package cc.happyareabean.mojangapi.api;
 
 import lombok.Getter;
 import okhttp3.*;
@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * API Commons
  */
-@API.Reference(apiName = "API", apiVersion = "1.5")
+@API.Reference(apiName = "API", apiVersion = "3.0.0")
 public abstract class API {
 
     @Getter
